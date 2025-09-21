@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>Basit Hesap</title></head>
+  <body>
+    <h1>Basit Hesap</h1>
+    <p id="sonuc"></p>
+    <script>
+      // Örnek: 51 TL/litre, 6.3 L/100 km, 15 km için maliyet
+      const litreFiyat = 51, tuketim = 6.3, mesafe = 15;
+      const maliyet = litreFiyat * (tuketim/100) * mesafe;
+      document.getElementById('sonuc').textContent =
+        `Tahmini maliyet: ${maliyet.toFixed(2)} TL`;
+    </script>
+  </body>
+</html>
