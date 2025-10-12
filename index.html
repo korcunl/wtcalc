@@ -3,136 +3,238 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Yakıt Maliyeti Hesaplayıcı</title>
+  <title>Boru Kesiti — NPS & Schedule Görsel Hesap</title>
   <style>
-    :root { --radius: 16px; --pad: 16px; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; padding: 24px; background: #f6f7f9; }
-    .app { max-width: 560px; margin: 0 auto; background: white; border-radius: var(--radius); box-shadow: 0 6px 20px rgba(0,0,0,.06); padding: 24px; }
-    h1 { font-size: 20px; margin: 0 0 8px; }
-    p.help { margin: 0 0 16px; color: #555; }
-    form { display: grid; gap: 12px; }
-    label { font-size: 13px; color: #333; }
-    .row { display: grid; grid-template-columns: 1fr 120px; gap: 12px; align-items: end; }
-    input[type="number"] { width: 100%; padding: 12px; border: 1px solid #d7dbe2; border-radius: 12px; font-size: 16px; }
-    input[type="number"]:focus { outline: none; border-color: #4c8bf5; box-shadow: 0 0 0 3px rgba(76,139,245,.15); }
-    button { padding: 12px 16px; border: 0; border-radius: 12px; background: black; color: white; font-weight: 600; cursor: pointer; }
-    button:disabled { opacity: .6; cursor: not-allowed; }
-    .results { margin-top: 18px; display: grid; gap: 8px; padding: 16px; border: 1px dashed #d7dbe2; border-radius: 12px; background: #fafbfc; }
-    .resline { display: flex; justify-content: space-between; }
-    .muted { color: #666; font-size: 14px; }
-    footer { margin-top: 18px; font-size: 12px; color: #777; text-align: center; }
+    :root { --card: #fff; --ink:#0f172a; --muted:#64748b; --ring:#3b82f6; --bg:#f6f7f9; }
+    * { box-sizing: border-box }
+    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--ink); }
+    .wrap { max-width: 1100px; margin: 24px auto; padding: 0 16px; display: grid; gap: 16px; }
+    .grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; }
+    .card { background:var(--card); border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,.06); }
+    h1 { font-size: 22px; margin: 0 0 6px }
+    .sub { color:var(--muted); margin:0 0 16px }
+    label { font-size: 13px; color:#111; display:block; margin-bottom:6px }
+    select, input { width: 100%; padding: 12px 14px; border:1px solid #d7dbe2; border-radius:12px; font-size:15px; background:#fff; }
+    select:focus, input:focus { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+    .row { display:grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .row2 { display:grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top:12px }
+    .kv { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px dashed #e5e8ef; }
+    .kv:last-child { border-bottom:0 }
+    .muted { color:var(--muted) }
+    .svgbox { display:flex; align-items:center; justify-content:center; height: 460px; background: #fafbfc; border:1px dashed #d7dbe2; border-radius:12px; }
+    .hint { font-size:12px; color:var(--muted); margin-top:8px }
+    footer { text-align:center; color:var(--muted); font-size:12px; margin-top:8px }
+    @media (max-width: 980px){ .grid{ grid-template-columns: 1fr } .svgbox{ height:360px } }
   </style>
 </head>
 <body>
-  <div class="app">
-    <h1>Yakıt Maliyeti Hesaplayıcı</h1>
-    <p class="help">Litre fiyatını (TL), ortalama tüketimi (L/100 km) ve mesafeyi (km) gir; toplam maliyeti hesaplayalım.</p>
+  <div class="wrap">
+    <div class="card">
+      <h1>Boru Kesiti — Görsel Hesap</h1>
+      <p class="sub">NPS (Size) ve Schedule seç; ölçüler, kg/m ve su dolu kg/m otomatik hesaplansın. SVG çizim gerçek oranlıdır.</p>
+      <div class="grid">
+        <!-- Sol: Form & Sonuçlar -->
+        <div class="card" style="padding:16px">
+          <div class="row">
+            <div>
+              <label>Malzeme (Yoğunluk)</label>
+              <select id="material">
+                <option value="steel">Carbon Steel (~7850 kg/m³)</option>
+                <option value="ss">Stainless (~8000 kg/m³)</option>
+              </select>
+            </div>
+            <div>
+              <label>NPS / Size</label>
+              <select id="nps"></select>
+            </div>
+            <div>
+              <label>Schedule</label>
+              <select id="sched"></select>
+            </div>
+            <div>
+              <label>Birim</label>
+              <select id="unit">
+                <option value="mm">mm (gösterim)</option>
+                <option value="inch">inç (gösterim)</option>
+              </select>
+            </div>
+          </div>
 
-    <form id="form" autocomplete="off">
-      <div class="row">
-        <div>
-          <label for="price">Litre Fiyatı (TL/L)</label>
-          <input id="price" type="number" step="0.01" min="0" placeholder="örn. 51" required />
+          <div class="row2">
+            <div class="card">
+              <div class="kv"><span>Dış Çap (OD)</span><strong id="odOut">—</strong></div>
+              <div class="kv"><span>Et Kalınlığı (t)</span><strong id="tOut">—</strong></div>
+              <div class="kv"><span>İç Çap (ID = OD − 2t)</span><strong id="idOut">—</strong></div>
+            </div>
+            <div class="card">
+              <div class="kv"><span>Ağırlık (kg/m)</span><strong id="wOut">—</strong></div>
+              <div class="kv"><span>Su dolu (kg/m)</span><strong id="wfOut">—</strong></div>
+              <div class="kv"><span>Not</span><span class="muted">ρ<sub>çelik</sub>×alan + ρ<sub>su</sub>×iç alan</span></div>
+            </div>
+          </div>
+          <p class="hint">Veri seti örnektir (ASME B36.10M/B36.19M yaygın değerleri). Genişletmek için aşağıdaki <code>DATA</code>’ya yeni satırlar ekleyin.</p>
         </div>
-        <div>
-          <label for="distance">Mesafe (km)</label>
-          <input id="distance" type="number" step="0.1" min="0" placeholder="örn. 15" required />
+
+        <!-- Sağ: SVG çizim -->
+        <div class="card">
+          <div class="svgbox">
+            <svg id="svg" viewBox="0 0 600 600" width="100%" height="100%" aria-label="Boru kesit çizimi">
+              <!-- Dinamik olarak doldurulacak -->
+            </svg>
+          </div>
+          <footer>Çizim ölçeği: 1 px ≈ otomatik. Ölçüler etikette mm/inç cinsinden gösterilir.</footer>
         </div>
       </div>
-
-      <div class="row">
-        <div>
-          <label for="consumption">Ortalama Tüketim (L/100 km)</label>
-          <input id="consumption" type="number" step="0.1" min="0" placeholder="örn. 6.3" required />
-        </div>
-        <div>
-          <label for="currency">Para Birimi</label>
-          <input id="currency" type="text" value="TL" maxlength="6" />
-        </div>
-      </div>
-
-      <button id="calc" type="submit">Hesapla</button>
-      <button id="clear" type="button" style="background:#e6e9ef;color:#111">Sıfırla</button>
-    </form>
-
-    <div class="results" id="results" hidden>
-      <div class="resline"><span>Toplam Maliyet</span> <strong id="cost">—</strong></div>
-      <div class="resline"><span>Tahmini Yakıt (L)</span> <strong id="liters">—</strong></div>
-      <div class="resline muted"><span>Km başına maliyet</span> <span id="perkm">—</span></div>
     </div>
-
-    <footer>Form değerleri tarayıcıda saklanır (localStorage). Sunucu yok, veriler paylaşılmaz.</footer>
   </div>
 
   <script>
-    const el = (id) => document.getElementById(id);
-    const price = el('price');
-    const distance = el('distance');
-    const consumption = el('consumption');
-    const currency = el('currency');
-    const resultsBox = el('results');
-    const costOut = el('cost');
-    const litersOut = el('liters');
-    const perkmOut = el('perkm');
-
-    // Basit sayı formatlayıcı
-    const fmt = (n, unit='') => {
-      if (!isFinite(n)) return '—';
-      return new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n) + (unit ? ' ' + unit : '');
+    // ------- Başlangıç veri seti (kolayca genişletilebilir) -------
+    // Tüm OD'ler mm; thickness (t) mm. Sch40 ≈ STD, Sch80 ≈ XS
+    const DATA = {
+      '2"':  { OD: 60.3,  schedules: { 'Sch 40': 3.91, 'Sch 80': 5.54 } },
+      '4"':  { OD: 114.3, schedules: { 'Sch 40': 6.02, 'Sch 80': 8.56 } },
+      '6"':  { OD: 168.3, schedules: { 'Sch 40 (STD)': 7.11, 'Sch 80 (XS)': 10.97 } },
+      '8"':  { OD: 219.1, schedules: { 'Sch 40': 8.18, 'Sch 80': 12.70 } }
     };
 
-    function compute() {
-      const p = parseFloat(price.value);
-      const d = parseFloat(distance.value);
-      const c = parseFloat(consumption.value);
-      if ([p,d,c].some(x => !isFinite(x) || x < 0)) { resultsBox.hidden = true; return; }
+    // Yoğunluklar (kg/m3)
+    const DENSITY = { steel: 7850, ss: 8000, water: 1000 };
 
-      // Litre = (tüketim/100)*mesafe
-      const liters = (c/100) * d;
-      const cost = p * liters;
-      const perkm = cost / d;
+    // ---------- Elemanlar ----------
+    const el = id => document.getElementById(id);
+    const npsSel = el('nps'), schSel = el('sched'), unitSel = el('unit'), matSel = el('material');
+    const odOut = el('odOut'), tOut = el('tOut'), idOut = el('idOut'), wOut = el('wOut'), wfOut = el('wfOut');
+    const svg = el('svg');
 
-      costOut.textContent = fmt(cost, currency.value || 'TL');
-      litersOut.textContent = fmt(liters, 'L');
-      perkmOut.textContent = fmt(perkm, currency.value || 'TL') + ' / km';
-      resultsBox.hidden = false;
+    // ---------- Yardımcılar ----------
+    const mmToInch = mm => mm / 25.4;
+    const fmt = (v, u='mm') => {
+      if (!isFinite(v)) return '—';
+      if (u === 'inch') return mmToInch(v).toFixed(3) + ' in';
+      return v.toFixed(2) + ' mm';
+    };
+    const fmtKg = v => isFinite(v) ? v.toFixed(2) + ' kg/m' : '—';
+
+    function populateNps() {
+      npsSel.innerHTML = '';
+      Object.keys(DATA).forEach(k => {
+        const opt = document.createElement('option'); opt.value = k; opt.textContent = k;
+        npsSel.appendChild(opt);
+      });
     }
 
-    // Formu gönderince hesapla ve değerleri kaydet
-    el('form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      saveState();
-      compute();
-    });
-
-    // Sıfırla
-    el('clear').addEventListener('click', () => {
-      price.value = distance.value = consumption.value = '';
-      resultsBox.hidden = true;
-      localStorage.removeItem('yakithesap:v1');
-    });
-
-    // Local storage ile otomatik doldurma
-    function saveState() {
-      const data = { price: price.value, distance: distance.value, consumption: consumption.value, currency: currency.value };
-      localStorage.setItem('yakithesap:v1', JSON.stringify(data));
+    function populateSched(nps) {
+      schSel.innerHTML = '';
+      const S = DATA[nps].schedules;
+      Object.keys(S).forEach(k => {
+        const opt = document.createElement('option'); opt.value = k; opt.textContent = k;
+        schSel.appendChild(opt);
+      });
     }
-    function loadState() {
-      try {
-        const data = JSON.parse(localStorage.getItem('yakithesap:v1') || '{}');
-        if (data.price) price.value = data.price;
-        if (data.distance) distance.value = data.distance;
-        if (data.consumption) consumption.value = data.consumption;
-        if (data.currency) currency.value = data.currency;
-        if (data.price && data.distance && data.consumption) compute();
-      } catch {}
-    }
-    loadState();
 
-    // Değer değişince anlık hesap için (isteğe bağlı)
-    [price, distance, consumption, currency].forEach(i => i.addEventListener('input', () => {
-      saveState(); compute();
-    }));
+    function computeAndRender() {
+      const nps = npsSel.value;
+      const sch = schSel.value;
+      const unit = unitSel.value;
+      const mat = matSel.value;
+      const OD_mm = DATA[nps].OD;
+      const t_mm = DATA[nps].schedules[sch];
+      const ID_mm = OD_mm - 2 * t_mm;
+
+      // Çıktılar (mm/inç)
+      odOut.textContent = fmt(OD_mm, unit);
+      tOut.textContent  = fmt(t_mm, unit);
+      idOut.textContent = fmt(ID_mm, unit);
+
+      // kg/m hesapları (metre cinsinden alanlar)
+      const OD = OD_mm / 1000, ID = ID_mm / 1000; // m
+      const areaSteel = Math.PI * (OD*OD - ID*ID) / 4;               // m^2
+      const areaWater = Math.PI * (ID*ID) / 4;                        // m^2
+      const rhoSteel  = DENSITY[mat], rhoWater = DENSITY.water;
+      const w = areaSteel * rhoSteel;                 // kg/m
+      const wf = w + areaWater * rhoWater;            // kg/m (su dahil)
+
+      wOut.textContent  = fmtKg(w);
+      wfOut.textContent = fmtKg(wf);
+
+      drawSVG(OD_mm, ID_mm); // mm
+    }
+
+    function drawSVG(OD_mm, ID_mm){
+      svg.innerHTML = ''; // temizle
+
+      // SVG kanvas ölçüsü
+      const W = 600, H = 600, cx = W/2, cy = H/2;
+
+      // mm -> px ölçek: dış çapa göre %80 alanı kullan
+      const margin = 40;
+      const maxRpx = Math.min(W,H)/2 - margin;
+      const scale = maxRpx / (OD_mm/2); // px/mm
+      const OD_r = (OD_mm/2) * scale;
+      const ID_r = (ID_mm/2) * scale;
+
+      // Dış ve iç daireler
+      const outer = circle(cx, cy, OD_r, '#253955');
+      const inner = circle(cx, cy, ID_r, '#ffffff');
+
+      // Kesit hatch (çeperi göstermek için kalın stroke)
+      const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      ring.setAttribute('cx', cx); ring.setAttribute('cy', cy); ring.setAttribute('r', (OD_r+ID_r)/2);
+      ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', '#253955'); ring.setAttribute('stroke-width', (OD_r-ID_r));
+      ring.setAttribute('opacity', '0.25');
+
+      // Ölçülendirme çizgileri (OD ve ID)
+      const gDim = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      gDim.appendChild(dimLine(cx-OD_r, cy+OD_r+20, cx+OD_r, cy+OD_r+20, `${OD_mm.toFixed(1)} mm OD`));
+      gDim.appendChild(dimLine(cx-ID_r, cy-OD_r-24, cx+ID_r, cy-OD_r-24, `${ID_mm.toFixed(2)} mm ID`));
+
+      // Ekrana ekle
+      svg.appendChild(outer);
+      svg.appendChild(inner);
+      svg.appendChild(ring);
+      svg.appendChild(gDim);
+    }
+
+    function circle(cx, cy, r, stroke='#111'){
+      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', r);
+      c.setAttribute('fill', '#f8fafc');
+      c.setAttribute('stroke', stroke);
+      c.setAttribute('stroke-width', 2);
+      return c;
+    }
+
+    function dimLine(x1,y1,x2,y2,label){
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', x1); line.setAttribute('y1', y1); line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+      line.setAttribute('stroke', '#334155'); line.setAttribute('stroke-width', 2);
+      const a1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      const a2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+      [a1,a2].forEach(a=>{ a.setAttribute('stroke','#334155'); a.setAttribute('stroke-width',2); });
+      a1.setAttribute('x1', x1); a1.setAttribute('y1', y1-6); a1.setAttribute('x2', x1); a1.setAttribute('y2', y1+6);
+      a2.setAttribute('x1', x2); a2.setAttribute('y1', y2-6); a2.setAttribute('x2', x2); a2.setAttribute('y2', y2+6);
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', (x1+x2)/2); text.setAttribute('y', y1 - 8);
+      text.setAttribute('text-anchor', 'middle'); text.setAttribute('font-size', '14');
+      text.setAttribute('fill', '#0f172a'); text.textContent = label;
+      g.appendChild(line); g.appendChild(a1); g.appendChild(a2); g.appendChild(text);
+      return g;
+    }
+
+    // ---------- Olaylar ----------
+    [npsSel, schSel, unitSel, matSel].forEach(s => s && s.addEventListener('change', computeAndRender));
+
+    // Başlat
+    populateNps();
+    npsSel.value = '6"';
+    populateSched(npsSel.value);
+    schSel.value = Object.keys(DATA[npsSel.value].schedules)[0];
+    computeAndRender();
+
+    // NPS değişince schedule listesini tazele
+    npsSel.addEventListener('change', () => { populateSched(npsSel.value); schSel.selectedIndex = 0; computeAndRender(); });
   </script>
 </body>
 </html>
