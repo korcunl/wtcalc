@@ -1,240 +1,317 @@
 <!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Boru Kesiti — NPS & Schedule Görsel Hesap</title>
-  <style>
-    :root { --card: #fff; --ink:#0f172a; --muted:#64748b; --ring:#3b82f6; --bg:#f6f7f9; }
-    * { box-sizing: border-box }
-    body { margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--ink); }
-    .wrap { max-width: 1100px; margin: 24px auto; padding: 0 16px; display: grid; gap: 16px; }
-    .grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; }
-    .card { background:var(--card); border-radius: 16px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,.06); }
-    h1 { font-size: 22px; margin: 0 0 6px }
-    .sub { color:var(--muted); margin:0 0 16px }
-    label { font-size: 13px; color:#111; display:block; margin-bottom:6px }
-    select, input { width: 100%; padding: 12px 14px; border:1px solid #d7dbe2; border-radius:12px; font-size:15px; background:#fff; }
-    select:focus, input:focus { outline: none; border-color: var(--ring); box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
-    .row { display:grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-    .row2 { display:grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top:12px }
-    .kv { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px dashed #e5e8ef; }
-    .kv:last-child { border-bottom:0 }
-    .muted { color:var(--muted) }
-    .svgbox { display:flex; align-items:center; justify-content:center; height: 460px; background: #fafbfc; border:1px dashed #d7dbe2; border-radius:12px; }
-    .hint { font-size:12px; color:var(--muted); margin-top:8px }
-    footer { text-align:center; color:var(--muted); font-size:12px; margin-top:8px }
-    @media (max-width: 980px){ .grid{ grid-template-columns: 1fr } .svgbox{ height:360px } }
-  </style>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Beam Deflection — Fixed–Fixed (Midspan Load)</title>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#ffffff; --ink:#0f172a; --muted:#6b7280;
+    --brand:#111827; --accent:#2563eb; --grid:#e5e7eb; --ok:#16a34a;
+    --rad:16px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--ink)}
+  .wrap{max-width:1100px;margin:24px auto;padding:0 16px;display:grid;gap:16px}
+  h1{font-size:22px;margin:0 0 6px}
+  .sub{color:var(--muted);margin:0 0 14px}
+  .grid{display:grid;grid-template-columns:1.05fr 1fr;gap:16px}
+  .card{background:var(--card);border-radius:var(--rad);box-shadow:0 10px 30px rgba(0,0,0,.06);padding:18px}
+  label{font-size:13px;color:#111;margin-bottom:6px;display:block}
+  .row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .row2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
+  input,select{width:100%;padding:12px 14px;border:1px solid #d7dbe2;border-radius:12px;font-size:15px;background:#fff}
+  input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+  .btn{padding:12px 16px;border:0;border-radius:12px;background:var(--brand);color:#fff;font-weight:600;cursor:pointer}
+  .btn.secondary{background:#e5e7eb;color:#111}
+  .kv{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--grid)}
+  .kv:last-child{border-bottom:0}
+  .kv strong{font-variant-numeric:tabular-nums}
+  .ok{color:var(--ok);font-weight:600}
+  .canvas{height:460px;border:1px dashed #d7dbe2;border-radius:12px;background:#fafbfc;display:flex;align-items:center;justify-content:center}
+  .hint{font-size:12px;color:var(--muted);margin-top:8px}
+  footer{font-size:12px;color:var(--muted);text-align:center;margin-top:6px}
+  @media (max-width:980px){ .grid{grid-template-columns:1fr}.canvas{height:360px} .row{grid-template-columns:repeat(2,1fr)} }
+</style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-      <h1>Boru Kesiti — Görsel Hesap</h1>
-      <p class="sub">NPS (Size) ve Schedule seç; ölçüler, kg/m ve su dolu kg/m otomatik hesaplansın. SVG çizim gerçek oranlıdır.</p>
+      <h1>Fixed–Fixed Kiriş — Ortadan P Yükü</h1>
+      <p class="sub">E, I, L ve P değerlerini gir; **sehim eğrisi** (ölçekli) ve **δ<sub>max</sub>** değerlerini gör. Çözüm: 2 elemanlı Euler–Bernoulli FEM + Hermite şekil fonksiyonları.</p>
       <div class="grid">
-        <!-- Sol: Form & Sonuçlar -->
+        <!-- Sol panel: form + sonuçlar -->
         <div class="card" style="padding:16px">
           <div class="row">
             <div>
-              <label>Malzeme (Yoğunluk)</label>
-              <select id="material">
-                <option value="steel">Carbon Steel (~7850 kg/m³)</option>
-                <option value="ss">Stainless (~8000 kg/m³)</option>
-              </select>
+              <label>Elastisite Modülü E (GPa)</label>
+              <input id="E" type="number" step="0.1" value="210" />
             </div>
             <div>
-              <label>NPS / Size</label>
-              <select id="nps"></select>
+              <label>Atalet Momenti I (m⁴)</label>
+              <input id="I" type="number" step="1e-8" value="8e-6" />
             </div>
             <div>
-              <label>Schedule</label>
-              <select id="sched"></select>
+              <label>Kiriş Boyu L (m)</label>
+              <input id="L" type="number" step="0.1" value="6" />
             </div>
             <div>
-              <label>Birim</label>
-              <select id="unit">
-                <option value="mm">mm (gösterim)</option>
-                <option value="inch">inç (gösterim)</option>
-              </select>
+              <label>Orta Nokta Yükü P (kN)</label>
+              <input id="P" type="number" step="0.1" value="10" />
             </div>
           </div>
 
           <div class="row2">
-            <div class="card">
-              <div class="kv"><span>Dış Çap (OD)</span><strong id="odOut">—</strong></div>
-              <div class="kv"><span>Et Kalınlığı (t)</span><strong id="tOut">—</strong></div>
-              <div class="kv"><span>İç Çap (ID = OD − 2t)</span><strong id="idOut">—</strong></div>
+            <div>
+              <label>Görsel Ölçek (×)</label>
+              <input id="scale" type="range" min="50" max="1500" value="600" />
+              <div class="hint">Deformasyon çizimi görsel amaçlı büyütülür.</div>
             </div>
-            <div class="card">
-              <div class="kv"><span>Ağırlık (kg/m)</span><strong id="wOut">—</strong></div>
-              <div class="kv"><span>Su dolu (kg/m)</span><strong id="wfOut">—</strong></div>
-              <div class="kv"><span>Not</span><span class="muted">ρ<sub>çelik</sub>×alan + ρ<sub>su</sub>×iç alan</span></div>
+            <div>
+              <label>Örnekleme Noktası (eğri düzgünlüğü)</label>
+              <input id="nsamp" type="range" min="40" max="400" value="180" />
             </div>
           </div>
-          <p class="hint">Veri seti örnektir (ASME B36.10M/B36.19M yaygın değerleri). Genişletmek için aşağıdaki <code>DATA</code>’ya yeni satırlar ekleyin.</p>
+
+          <div class="row2" style="margin-top:12px">
+            <div class="card">
+              <div class="kv"><span>Analitik δ<sub>max</sub> = <span class="muted">P L³ / (192 E I)</span></span><strong id="dAnal">—</strong></div>
+              <div class="kv"><span>Sayısal maksimum |w(x)|</span><strong id="dNum">—</strong></div>
+              <div class="kv"><span>Merkezde w(L/2)</span><strong id="dMid">—</strong></div>
+            </div>
+            <div class="card">
+              <div class="kv"><span>Sınır şartları</span><strong> w(0)=θ(0)=0, w(L)=θ(L)=0 </strong></div>
+              <div class="kv"><span>Model</span><span class="muted">2 EB kiriş elemanı, P(L/2)</span></div>
+              <div class="kv"><span>Çözüm durumu</span><strong id="ok" class="ok">Hazır</strong></div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px; display:flex; gap:10px">
+            <button class="btn" id="solve">Hesapla & Çiz</button>
+            <button class="btn secondary" id="reset">Sıfırla</button>
+          </div>
+          <p class="hint">Birimler: E (GPa→Pa), P (kN→N). Sonuç sehimler **metre** olarak hesaplanır, tabloda **mm** gösterilir.</p>
         </div>
 
-        <!-- Sağ: SVG çizim -->
+        <!-- Sağ panel: çizim -->
         <div class="card">
-          <div class="svgbox">
-            <svg id="svg" viewBox="0 0 600 600" width="100%" height="100%" aria-label="Boru kesit çizimi">
+          <div class="canvas">
+            <svg id="svg" viewBox="0 0 1000 420" width="100%" height="100%" aria-label="kiriş çizimi">
               <!-- Dinamik olarak doldurulacak -->
             </svg>
           </div>
-          <footer>Çizim ölçeği: 1 px ≈ otomatik. Ölçüler etikette mm/inç cinsinden gösterilir.</footer>
+          <footer>Gri çizgi: orijinal eksen — Lacivert: ölçekli sehim eğrisi — Destekler: dolu kareler.</footer>
         </div>
       </div>
     </div>
   </div>
 
-  <script>
-    // ------- Başlangıç veri seti (kolayca genişletilebilir) -------
-    // Tüm OD'ler mm; thickness (t) mm. Sch40 ≈ STD, Sch80 ≈ XS
-    const DATA = {
-      '2"':  { OD: 60.3,  schedules: { 'Sch 40': 3.91, 'Sch 80': 5.54 } },
-      '4"':  { OD: 114.3, schedules: { 'Sch 40': 6.02, 'Sch 80': 8.56 } },
-      '6"':  { OD: 168.3, schedules: { 'Sch 40 (STD)': 7.11, 'Sch 80 (XS)': 10.97 } },
-      '8"':  { OD: 219.1, schedules: { 'Sch 40': 8.18, 'Sch 80': 12.70 } }
-    };
+<script>
+  // ----- Kısa yardımcılar -----
+  const el = id => document.getElementById(id);
+  const mm = v => (v*1000).toFixed(2) + ' mm';
+  const toPa = GPa => GPa*1e9;
+  const toN  = kN  => kN*1e3;
 
-    // Yoğunluklar (kg/m3)
-    const DENSITY = { steel: 7850, ss: 8000, water: 1000 };
+  // ----- Beam element local stiffness (Euler-Bernoulli) -----
+  function beamK(EI, L){
+    const L2=L*L, L3=L2*L;
+    const f = EI / L3;
+    // 4x4
+    return [
+      [ 12,   6*L,  -12,   6*L],
+      [ 6*L, 4*L2,  -6*L, 2*L2],
+      [-12,  -6*L,   12,  -6*L],
+      [ 6*L, 2*L2,  -6*L, 4*L2]
+    ].map(row => row.map(v => v * f));
+  }
 
-    // ---------- Elemanlar ----------
-    const el = id => document.getElementById(id);
-    const npsSel = el('nps'), schSel = el('sched'), unitSel = el('unit'), matSel = el('material');
-    const odOut = el('odOut'), tOut = el('tOut'), idOut = el('idOut'), wOut = el('wOut'), wfOut = el('wfOut');
+  // ----- Assemble 2 elements (nodes 0-1-2) -----
+  function assembleGlobal(EI, L){
+    const Le = L/2;
+    const k1 = beamK(EI, Le);
+    const k2 = beamK(EI, Le);
+    // Global 6x6 zero
+    const K = Array.from({length:6}, _=>Array(6).fill(0));
+    // add k1 at dofs [0,1,2,3]
+    const m1=[0,1,2,3], m2=[2,3,4,5];
+    for(let i=0;i<4;i++) for(let j=0;j<4;j++){
+      K[m1[i]][m1[j]] += k1[i][j];
+      K[m2[i]][m2[j]] += k2[i][j];
+    }
+    return K;
+  }
+
+  // ----- Reduce (apply fixed BCs) & solve -----
+  function solveSystem(K, F, fixedIdx){
+    // Create list of free dofs
+    const all=[0,1,2,3,4,5];
+    const free = all.filter(i => !fixedIdx.includes(i));
+    // Build reduced
+    const Kr = free.map(i => free.map(j => K[i][j]));
+    const Fr = free.map(i => F[i]);
+    const ur = gaussSolve(Kr, Fr);
+    // Build full u
+    const U = Array(6).fill(0);
+    free.forEach((i,ii)=> U[i]=ur[ii]);
+    return U; // [w0, th0, w1, th1, w2, th2]
+  }
+
+  // Simple Gaussian elimination (no pivoting is fine for 2x2, 3x3 etc.)
+  function gaussSolve(A, b){
+    const n = A.length;
+    // Augmented matrix
+    const M = A.map((row,i)=> row.concat([b[i]]));
+    for(let k=0;k<n;k++){
+      // pivot
+      let piv = M[k][k];
+      if(Math.abs(piv) < 1e-18) throw new Error('Singular matrix');
+      // normalize
+      for(let j=k;j<=n;j++) M[k][j] /= piv;
+      // eliminate
+      for(let i=0;i<n;i++){
+        if(i===k) continue;
+        const f = M[i][k];
+        for(let j=k;j<=n;j++) M[i][j] -= f*M[k][j];
+      }
+    }
+    return M.map(row=>row[n]);
+  }
+
+  // ----- Hermite shape functions for plotting -----
+  function wHermite(x, L, wi, thi, wj, thj){
+    const s = x/L;
+    const N1 = 1 - 3*s*s + 2*s*s*s;
+    const N2 = L*(s - 2*s*s + s*s*s);
+    const N3 = 3*s*s - 2*s*s*s;
+    const N4 = L*(-s*s + s*s*s);
+    return N1*wi + N2*thi + N3*wj + N4*thj;
+  }
+
+  function solveAndPlot(){
+    // Inputs
+    const E = toPa(parseFloat(el('E').value));
+    const I = parseFloat(el('I').value);
+    const L = parseFloat(el('L').value);
+    const P = toN(parseFloat(el('P').value));
+    const scale = parseFloat(el('scale').value);
+    const nsamp = parseInt(el('nsamp').value, 10);
+
+    if([E,I,L,P].some(v=>!isFinite(v) || v<=0)) { el('ok').textContent='Hatalı giriş'; return; }
+
+    const EI = E*I;
+
+    // Global stiffness (6x6), load at node 1 vertical -> DOF index 2
+    const K = assembleGlobal(EI, L);
+    const F = [0,0, P, 0, 0, 0]; // [w0,th0,w1,th1,w2,th2]
+    const fixed = [0,1,4,5];     // fixed-fixed
+    const U = solveSystem(K, F, fixed); // full dof vector
+
+    const w0=U[0], th0=U[1], w1=U[2], th1=U[3], w2=U[4], th2=U[5];
+
+    // Continuous curve via two elements
+    const Le=L/2;
+    const xs=[], ws=[];
+    for(let i=0;i<=nsamp/2;i++){
+      const x = (i/nsamp)*L; // 0..L/2
+      xs.push(x);
+      ws.push( wHermite(x, Le, 0, 0, w1, th1) );
+    }
+    for(let i=1;i<=nsamp/2;i++){
+      const xloc = (i/(nsamp/2))*Le; // 0..Le mapped to L/2..L
+      const x = L/2 + xloc;
+      xs.push(x);
+      ws.push( wHermite(xloc, Le, w1, th1, 0, 0) );
+    }
+
+    // Numeric max
+    let wabsmax = 0, wmid=0;
+    xs.forEach((x,idx)=>{
+      const val = ws[idx];
+      if(Math.abs(val)>Math.abs(wabsmax)) wabsmax=val;
+      if(Math.abs(x - L/2) < 1e-9) wmid = val;
+    });
+
+    // Analytic δmax
+    const dAnal = (P * Math.pow(L,3)) / (192 * EI);
+
+    // UI outputs
+    el('dAnal').textContent = mm(dAnal);
+    el('dNum').textContent  = mm(Math.abs(wabsmax));
+    el('dMid').textContent  = mm(Math.abs(wmid));
+    el('ok').textContent    = 'Hesap tamam';
+
+    // ---- SVG drawing ----
     const svg = el('svg');
+    svg.innerHTML='';
+    const W=1000, H=420, margin=40;
+    const baseY = H/2;
+    const leftX = margin, rightX = W - margin;
+    const xToPx = x => leftX + (x/L) * (rightX-leftX);
+    // normalize deflection for drawing (scale slider)
+    const yToPx = w => baseY + (-w * scale * 1000); // m -> mm, then ×scale and up-negative
 
-    // ---------- Yardımcılar ----------
-    const mmToInch = mm => mm / 25.4;
-    const fmt = (v, u='mm') => {
-      if (!isFinite(v)) return '—';
-      if (u === 'inch') return mmToInch(v).toFixed(3) + ' in';
-      return v.toFixed(2) + ' mm';
-    };
-    const fmtKg = v => isFinite(v) ? v.toFixed(2) + ' kg/m' : '—';
+    // baseline (undeformed)
+    const baseLine = line(xToPx(0), baseY, xToPx(L), baseY, '#c7cdd6', 2);
+    svg.appendChild(baseLine);
 
-    function populateNps() {
-      npsSel.innerHTML = '';
-      Object.keys(DATA).forEach(k => {
-        const opt = document.createElement('option'); opt.value = k; opt.textContent = k;
-        npsSel.appendChild(opt);
-      });
+    // supports (fixed) as squares
+    svg.appendChild(rect(xToPx(0)-6, baseY-6, 12, 12, '#111827'));
+    svg.appendChild(rect(xToPx(L)-6, baseY-6, 12, 12, '#111827'));
+
+    // load arrow at midspan
+    svg.appendChild(arrowDown(xToPx(L/2), baseY-60, 36, '#ef4444'));
+
+    // deflected polyline
+    const path = document.createElementNS('http://www.w3.org/2000/svg','polyline');
+    const pts = xs.map((x,i)=> `${xToPx(x)},${yToPx(ws[i])}`).join(' ');
+    path.setAttribute('points', pts);
+    path.setAttribute('fill','none');
+    path.setAttribute('stroke','#253955');
+    path.setAttribute('stroke-width','3');
+    svg.appendChild(path);
+
+    // ticks every 0.5 m
+    for(let x=0;x<=L+1e-9;x+=0.5){
+      const X=xToPx(x);
+      svg.appendChild(line(X, baseY-6, X, baseY+6, '#dfe3ea', 1));
     }
+  }
 
-    function populateSched(nps) {
-      schSel.innerHTML = '';
-      const S = DATA[nps].schedules;
-      Object.keys(S).forEach(k => {
-        const opt = document.createElement('option'); opt.value = k; opt.textContent = k;
-        schSel.appendChild(opt);
-      });
-    }
+  // --- SVG helpers ---
+  function line(x1,y1,x2,y2,color,w){
+    const ln = document.createElementNS('http://www.w3.org/2000/svg','line');
+    ln.setAttribute('x1',x1); ln.setAttribute('y1',y1);
+    ln.setAttribute('x2',x2); ln.setAttribute('y2',y2);
+    ln.setAttribute('stroke',color); ln.setAttribute('stroke-width',w||2);
+    return ln;
+  }
+  function rect(x,y,w,h,color){
+    const r = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    r.setAttribute('x',x); r.setAttribute('y',y); r.setAttribute('width',w); r.setAttribute('height',h);
+    r.setAttribute('fill',color); r.setAttribute('rx','2'); r.setAttribute('ry','2');
+    return r;
+  }
+  function arrowDown(x,y,size,color){
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    const shaft = line(x, y, x, y+size, color, 3);
+    const h = document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    h.setAttribute('points', `${x-8},${y+size-2} ${x+8},${y+size-2} ${x},${y+size+12}`);
+    h.setAttribute('fill', color);
+    g.appendChild(shaft); g.appendChild(h);
+    return g;
+  }
 
-    function computeAndRender() {
-      const nps = npsSel.value;
-      const sch = schSel.value;
-      const unit = unitSel.value;
-      const mat = matSel.value;
-      const OD_mm = DATA[nps].OD;
-      const t_mm = DATA[nps].schedules[sch];
-      const ID_mm = OD_mm - 2 * t_mm;
+  // events
+  el('solve').addEventListener('click', solveAndPlot);
+  el('reset').addEventListener('click', ()=>{
+    el('E').value=210; el('I').value=8e-6; el('L').value=6; el('P').value=10;
+    el('scale').value=600; el('nsamp').value=180;
+    solveAndPlot();
+  });
 
-      // Çıktılar (mm/inç)
-      odOut.textContent = fmt(OD_mm, unit);
-      tOut.textContent  = fmt(t_mm, unit);
-      idOut.textContent = fmt(ID_mm, unit);
-
-      // kg/m hesapları (metre cinsinden alanlar)
-      const OD = OD_mm / 1000, ID = ID_mm / 1000; // m
-      const areaSteel = Math.PI * (OD*OD - ID*ID) / 4;               // m^2
-      const areaWater = Math.PI * (ID*ID) / 4;                        // m^2
-      const rhoSteel  = DENSITY[mat], rhoWater = DENSITY.water;
-      const w = areaSteel * rhoSteel;                 // kg/m
-      const wf = w + areaWater * rhoWater;            // kg/m (su dahil)
-
-      wOut.textContent  = fmtKg(w);
-      wfOut.textContent = fmtKg(wf);
-
-      drawSVG(OD_mm, ID_mm); // mm
-    }
-
-    function drawSVG(OD_mm, ID_mm){
-      svg.innerHTML = ''; // temizle
-
-      // SVG kanvas ölçüsü
-      const W = 600, H = 600, cx = W/2, cy = H/2;
-
-      // mm -> px ölçek: dış çapa göre %80 alanı kullan
-      const margin = 40;
-      const maxRpx = Math.min(W,H)/2 - margin;
-      const scale = maxRpx / (OD_mm/2); // px/mm
-      const OD_r = (OD_mm/2) * scale;
-      const ID_r = (ID_mm/2) * scale;
-
-      // Dış ve iç daireler
-      const outer = circle(cx, cy, OD_r, '#253955');
-      const inner = circle(cx, cy, ID_r, '#ffffff');
-
-      // Kesit hatch (çeperi göstermek için kalın stroke)
-      const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      ring.setAttribute('cx', cx); ring.setAttribute('cy', cy); ring.setAttribute('r', (OD_r+ID_r)/2);
-      ring.setAttribute('fill', 'none'); ring.setAttribute('stroke', '#253955'); ring.setAttribute('stroke-width', (OD_r-ID_r));
-      ring.setAttribute('opacity', '0.25');
-
-      // Ölçülendirme çizgileri (OD ve ID)
-      const gDim = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      gDim.appendChild(dimLine(cx-OD_r, cy+OD_r+20, cx+OD_r, cy+OD_r+20, `${OD_mm.toFixed(1)} mm OD`));
-      gDim.appendChild(dimLine(cx-ID_r, cy-OD_r-24, cx+ID_r, cy-OD_r-24, `${ID_mm.toFixed(2)} mm ID`));
-
-      // Ekrana ekle
-      svg.appendChild(outer);
-      svg.appendChild(inner);
-      svg.appendChild(ring);
-      svg.appendChild(gDim);
-    }
-
-    function circle(cx, cy, r, stroke='#111'){
-      const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      c.setAttribute('cx', cx); c.setAttribute('cy', cy); c.setAttribute('r', r);
-      c.setAttribute('fill', '#f8fafc');
-      c.setAttribute('stroke', stroke);
-      c.setAttribute('stroke-width', 2);
-      return c;
-    }
-
-    function dimLine(x1,y1,x2,y2,label){
-      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', x1); line.setAttribute('y1', y1); line.setAttribute('x2', x2); line.setAttribute('y2', y2);
-      line.setAttribute('stroke', '#334155'); line.setAttribute('stroke-width', 2);
-      const a1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      const a2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      [a1,a2].forEach(a=>{ a.setAttribute('stroke','#334155'); a.setAttribute('stroke-width',2); });
-      a1.setAttribute('x1', x1); a1.setAttribute('y1', y1-6); a1.setAttribute('x2', x1); a1.setAttribute('y2', y1+6);
-      a2.setAttribute('x1', x2); a2.setAttribute('y1', y2-6); a2.setAttribute('x2', x2); a2.setAttribute('y2', y2+6);
-      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      text.setAttribute('x', (x1+x2)/2); text.setAttribute('y', y1 - 8);
-      text.setAttribute('text-anchor', 'middle'); text.setAttribute('font-size', '14');
-      text.setAttribute('fill', '#0f172a'); text.textContent = label;
-      g.appendChild(line); g.appendChild(a1); g.appendChild(a2); g.appendChild(text);
-      return g;
-    }
-
-    // ---------- Olaylar ----------
-    [npsSel, schSel, unitSel, matSel].forEach(s => s && s.addEventListener('change', computeAndRender));
-
-    // Başlat
-    populateNps();
-    npsSel.value = '6"';
-    populateSched(npsSel.value);
-    schSel.value = Object.keys(DATA[npsSel.value].schedules)[0];
-    computeAndRender();
-
-    // NPS değişince schedule listesini tazele
-    npsSel.addEventListener('change', () => { populateSched(npsSel.value); schSel.selectedIndex = 0; computeAndRender(); });
-  </script>
+  // initial render
+  solveAndPlot();
+</script>
 </body>
 </html>
