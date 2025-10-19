@@ -249,7 +249,7 @@
     const leftX = margin, rightX = W - margin;
     const xToPx = x => leftX + (x/L) * (rightX-leftX);
     // normalize deflection for drawing (scale slider)
-    const yToPx = w => baseY + (w * scale * 300); // m -> mm, then ×scale and up-negative
+    const yToPx = -w => baseY + (w * scale * 300); // m -> mm, then ×scale and up-negative
 
     // baseline (undeformed)
     const baseLine = line(xToPx(0), baseY, xToPx(L), baseY, '#c7cdd6', 2);
@@ -315,6 +315,7 @@
 </script>
 </body>
 </html>
+
 
 
 
