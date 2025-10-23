@@ -3,323 +3,112 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Beam Deflection — Fixed–Fixed (Midspan Load)</title>
+<title>Hoop Stress (ASME B31.8) — Minimal Hesap</title>
 <style>
   :root{
-    --bg:#f6f7f9; --card:#ffffff; --ink:#0f172a; --muted:#6b7280;
-    --brand:#111827; --accent:#2563eb; --grid:#e5e7eb; --ok:#16a34a;
-    --rad:16px;
+    --bg:#f6f7f9; --card:#fff; --ink:#0f172a; --muted:#6b7280;
+    --accent:#2563eb; --ok:#16a34a; --warn:#b45309; --bad:#b91c1c;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--ink)}
-  .wrap{max-width:1320px;margin:24px auto;padding:0 16px;display:grid;gap:16px}
+  .wrap{max-width:1080px;margin:24px auto;padding:0 20px;display:grid;gap:16px}
   h1{font-size:22px;margin:0 0 6px}
-  .sub{color:var(--muted);margin:0 0 14px}
-  .grid{display:grid;grid-template-columns:1.25fr 1fr;gap:20px}
-  .card{background:var(--card);border-radius:var(--rad);box-shadow:0 10px 30px rgba(0,0,255,0.4);padding:18px}
-  label{font-size:13px;color:#111;margin-bottom:6px;display:block}
-  .row{display:grid;grid-template-columns:repeat(4.1fr);gap:10px}
-  .row2{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
+  .sub{color:var(--muted);margin:0 0 12px}
+  .grid{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
+  .card{background:var(--card);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.06);padding:18px}
+  label{font-size:13px;display:block;margin-bottom:6px}
   input,select{width:100%;padding:12px 14px;border:1px solid #d7dbe2;border-radius:12px;font-size:15px;background:#fff}
   input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
-  .btn{padding:12px 16px;border:0;border-radius:12px;background:var(--brand);color:#fff;font-weight:600;cursor:pointer}
-  .btn.secondary{background:#e5e7eb;color:#111}
-  .kv{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px dashed var(--grid)}
+  .row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .row2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:10px}
+  .btn{padding:12px 16px;border:0;border-radius:12px;background:#111;color:#fff;font-weight:600;cursor:pointer}
+  .kv{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed #e5e7eb}
   .kv:last-child{border-bottom:0}
-  .kv strong{font-variant-numeric:tabular-nums}
-  .ok{color:var(--ok);font-weight:600}
-  .canvas{height:460px;border:1px dashed #d7dbe2;border-radius:12px;background:#fafbfc;display:flex;align-items:center;justify-content:center}
-  .hint{font-size:12px;color:var(--muted);margin-top:8px}
-  footer{font-size:12px;color:var(--muted);text-align:center;margin-top:6px}
-  @media (max-width:980px){ .grid{grid-template-columns:1fr}.canvas{height:360px} .row{grid-template-columns:repeat(2,1fr)} }
+  .ratio{font-weight:700}
+  .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
+  .hint{font-size:12px;color:var(--muted);margin-top:6px}
+  @media (max-width:980px){ .grid{grid-template-columns:1fr} .row{grid-template-columns:repeat(2,1fr)} }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>Fixed–Fixed Kiriş — Ortadan P Yükü</h1>
-      <p class=>2 Elemanlı Euler–Bernoulli FEM + Hermite Şekil Fonksiyonları</p>
-      <div class="grid">
-        <!-- Sol panel: form + sonuçlar -->
-        <div class="card" style="padding:14px">
-          <div class="row">
-            <div>
-              <label>Elastisite Modülü E (GPa)</label>
-              <input id="E" type="number" step="0.1" value="210" />
-            </div>
-            <div>
-              <label>Atalet Momenti I (m⁴)</label>
-              <input id="I" type="number" step="1e-8" value="8e-6" />
-            </div>
-            <div>
-              <label>Kiriş Boyu L (m)</label>
-              <input id="L" type="number" step="0.1" value="6" />
-            </div>
-            <div>
-              <label>Orta Nokta Yükü P (kN)</label>
-              <input id="P" type="number" step="0.1" value="10" />
-            </div>
+<div class="wrap">
+  <div class="card">
+    <h1>Hoop Stress Hesabı — ASME B31.8</h1>
+    <p class="sub">Seçili dış çap (inç) → <b>mm</b>’ye çevrilir. Hesap: <b>S<sub>H</sub> = P·D / (2·t)</b>. Son olarak <b>S<sub>H</sub>/SMYS</b> oranını verir.</p>
+    <div class="grid">
+      <!-- Sol panel: giriş -->
+      <div class="card">
+        <div class="row">
+          <div>
+            <label>Outside Diameter (inç)</label>
+            <select id="size">
+              <option value="56">56"</option>
+              <option value="48">48"</option>
+              <option value="36">36"</option>
+            </select>
           </div>
-
-          <div class="row2">
-            <div>
-              <label>Görsel Ölçek (×)</label>
-              <input id="scale" type="range" min="20" max="300" value="120" />
-              <div class="hint">Deformasyon çizimi görsel amaçlı büyütülür.</div>
-            </div>
-            <div>
-              <label>Örnekleme Noktası (eğri düzgünlüğü)</label>
-              <input id="nsamp" type="range" min="40" max="100" value="60" />
-            </div>
+          <div>
+            <label>Basınç P (MPa)</label>
+            <input id="P" type="number" step="0.01" value="9.55" />
           </div>
-
-          <div class="row2" style="margin-top:12px">
-            <div class="card">
-              <div class="kv"><span>Analitik δ<sub>max</sub> = <span class="muted">P L³ / (192 E I)</span></span><strong id="dAnal">—</strong></div>
-              <div class="kv"><span>Sayısal maksimum |w(x)|</span><strong id="dNum">—</strong></div>
-              <div class="kv"><span>Merkezde w(L/2)</span><strong id="dMid">—</strong></div>
-            </div>
-            <div class="card">
-              <div class="kv"><span>Sınır şartları</span><strong> w(0)=θ(0)=0, w(L)=θ(L)=0 </strong></div>
-              <div class="kv"><span>Model</span><span class="muted">2 EB kiriş elemanı, P(L/2)</span></div>
-              <div class="kv"><span>Çözüm durumu</span><strong id="ok" class="ok">Hazır</strong></div>
-            </div>
+          <div>
+            <label>Et Kalınlığı t (mm)</label>
+            <input id="t" type="number" step="0.01" value="19.45" />
           </div>
-
-          <div style="margin-top:12px; display:flex; gap:10px">
-            <button class="btn" id="solve">Hesapla & Çiz</button>
-            <button class="btn secondary" id="reset">Sıfırla</button>
+          <div>
+            <label>SMYS S (MPa)</label>
+            <input id="S" type="number" step="1" value="485" />
           </div>
-          <p class="hint">Birimler: E (GPa→Pa), P (kN→N). Sonuç sehimler **metre** olarak hesaplanır, tabloda **mm** gösterilir.</p>
         </div>
+        <div style="margin-top:12px"><button class="btn" id="calc">Hesapla</button></div>
+        <p class="hint">Not: D = (Outside Diameter inç) × 25.4 (mm). P ve S MPa, t ve D mm alınır → sonuç S<sub>H</sub> MPa.</p>
+      </div>
 
-        <!-- Sağ panel: çizim -->
-        <div class="card">
-          <div class="canvas">
-            <svg id="svg" viewBox="0 0 1000 420" width="100%" height="100%" aria-label="kiriş çizimi">
-              <!-- Dinamik olarak doldurulacak -->
-            </svg>
-          </div>
-          <footer>Gri çizgi: orijinal eksen — Lacivert: ölçekli sehim eğrisi — Destekler: dolu kareler.</footer>
-        </div>
+      <!-- Sağ panel: sonuç -->
+      <div class="card">
+        <div class="kv"><span>D (mm)</span><strong id="Dmm">—</strong></div>
+        <div class="kv"><span>Hoop Stress S<sub>H</sub> (MPa)</span><strong id="SH">—</strong></div>
+        <div class="kv"><span>Oran S<sub>H</sub>/SMYS</span><strong id="ratio" class="ratio">—</strong></div>
+        <div class="kv"><span>Formül</span><span class="hint">S<sub>H</sub> = P·D / (2·t)</span></div>
       </div>
     </div>
   </div>
+</div>
 
 <script>
-  // ----- Kısa yardımcılar -----
   const el = id => document.getElementById(id);
-  const mm = v => (v*1000).toFixed(2) + ' mm';
-  const toPa = GPa => GPa*1e9;
-  const toN  = kN  => kN*1e3;
+  const size = el('size'), P = el('P'), t = el('t'), S = el('S');
+  const DmmOut = el('Dmm'), SHOut = el('SH'), ratioOut = el('ratio');
 
-  // ----- Beam element local stiffness (Euler-Bernoulli) -----
-  function beamK(EI, L){
-    const L2=L*L, L3=L2*L;
-    const f = EI / L3;
-    // 4x4
-    return [
-      [ 12,   6*L,  -12,   6*L],
-      [ 6*L, 4*L2,  -6*L, 2*L2],
-      [-12,  -6*L,   12,  -6*L],
-      [ 6*L, 2*L2,  -6*L, 4*L2]
-    ].map(row => row.map(v => v * f));
-  }
+  function fmt(v, d=2){ return isFinite(v) ? v.toFixed(d) : '—'; }
 
-  // ----- Assemble 2 elements (nodes 0-1-2) -----
-  function assembleGlobal(EI, L){
-    const Le = L/2;
-    const k1 = beamK(EI, Le);
-    const k2 = beamK(EI, Le);
-    // Global 6x6 zero
-    const K = Array.from({length:6}, _=>Array(6).fill(0));
-    // add k1 at dofs [0,1,2,3]
-    const m1=[0,1,2,3], m2=[2,3,4,5];
-    for(let i=0;i<4;i++) for(let j=0;j<4;j++){
-      K[m1[i]][m1[j]] += k1[i][j];
-      K[m2[i]][m2[j]] += k2[i][j];
-    }
-    return K;
-  }
+  function compute(){
+    const inches = parseFloat(size.value);
+    const Dmm = inches * 25.4;               // mm
+    const Pmpa = parseFloat(P.value);        // MPa
+    const tmm  = parseFloat(t.value);        // mm
+    const Smys = parseFloat(S.value);        // MPa
 
-  // ----- Reduce (apply fixed BCs) & solve -----
-  function solveSystem(K, F, fixedIdx){
-    // Create list of free dofs
-    const all=[0,1,2,3,4,5];
-    const free = all.filter(i => !fixedIdx.includes(i));
-    // Build reduced
-    const Kr = free.map(i => free.map(j => K[i][j]));
-    const Fr = free.map(i => F[i]);
-    const ur = gaussSolve(Kr, Fr);
-    // Build full u
-    const U = Array(6).fill(0);
-    free.forEach((i,ii)=> U[i]=ur[ii]);
-    return U; // [w0, th0, w1, th1, w2, th2]
-  }
-
-  // Simple Gaussian elimination (no pivoting is fine for 2x2, 3x3 etc.)
-  function gaussSolve(A, b){
-    const n = A.length;
-    // Augmented matrix
-    const M = A.map((row,i)=> row.concat([b[i]]));
-    for(let k=0;k<n;k++){
-      // pivot
-      let piv = M[k][k];
-      if(Math.abs(piv) < 1e-18) throw new Error('Singular matrix');
-      // normalize
-      for(let j=k;j<=n;j++) M[k][j] /= piv;
-      // eliminate
-      for(let i=0;i<n;i++){
-        if(i===k) continue;
-        const f = M[i][k];
-        for(let j=k;j<=n;j++) M[i][j] -= f*M[k][j];
-      }
-    }
-    return M.map(row=>row[n]);
-  }
-
-  // ----- Hermite shape functions for plotting -----
-  function wHermite(x, L, wi, thi, wj, thj){
-    const s = x/L;
-    const N1 = 1 - 3*s*s + 2*s*s*s;
-    const N2 = L*(s - 2*s*s + s*s*s);
-    const N3 = 3*s*s - 2*s*s*s;
-    const N4 = L*(-s*s + s*s*s);
-    return N1*wi + N2*thi + N3*wj + N4*thj;
-  }
-
-  function solveAndPlot(){
-    // Inputs
-    const E = toPa(parseFloat(el('E').value));
-    const I = parseFloat(el('I').value);
-    const L = parseFloat(el('L').value);
-    const P = toN(parseFloat(el('P').value));
-    const scale = parseFloat(el('scale').value);
-    const nsamp = parseInt(el('nsamp').value, 10);
-
-    if([E,I,L,P].some(v=>!isFinite(v) || v<=0)) { el('ok').textContent='Hatalı giriş'; return; }
-
-    const EI = E*I;
-
-    // Global stiffness (6x6), load at node 1 vertical -> DOF index 2
-    const K = assembleGlobal(EI, L);
-    const F = [0,0, P, 0, 0, 0]; // [w0,th0,w1,th1,w2,th2]
-    const fixed = [0,1,4,5];     // fixed-fixed
-    const U = solveSystem(K, F, fixed); // full dof vector
-
-    const w0=U[0], th0=U[1], w1=U[2], th1=U[3], w2=U[4], th2=U[5];
-
-    // Continuous curve via two elements
-    const Le=L/2;
-    const xs=[], ws=[];
-    for(let i=0;i<=nsamp/2;i++){
-      const x = (i/nsamp)*L; // 0..L/2
-      xs.push(x);
-      ws.push( wHermite(x, Le, 0, 0, w1, th1) );
-    }
-    for(let i=1;i<=nsamp/2;i++){
-      const xloc = (i/(nsamp/2))*Le; // 0..Le mapped to L/2..L
-      const x = L/2 + xloc;
-      xs.push(x);
-      ws.push( wHermite(xloc, Le, w1, th1, 0, 0) );
+    if([inches,Pmpa,tmm,Smys].some(x => !isFinite(x) || x<=0)){
+      DmmOut.textContent = SHOut.textContent = ratioOut.textContent = '—';
+      ratioOut.className = 'ratio'; return;
     }
 
-    // Numeric max
-    let wabsmax = 0, wmid=0;
-    xs.forEach((x,idx)=>{
-      const val = ws[idx];
-      if(Math.abs(val)>Math.abs(wabsmax)) wabsmax=val;
-      if(Math.abs(x - L/2) < 1e-9) wmid = val;
-    });
+    // SH = P * D / (2*t)  -> MPa
+    const SH = (Pmpa * Dmm) / (2 * tmm);
+    const ratio = SH / Smys;
 
-    // Analytic δmax
-    const dAnal = (P * Math.pow(L,3)) / (192 * EI);
+    DmmOut.textContent = fmt(Dmm, 1);
+    SHOut.textContent  = fmt(SH, 2);
+    ratioOut.textContent = fmt(ratio, 2);
 
-    // UI outputs
-    el('dAnal').textContent = mm(dAnal);
-    el('dNum').textContent  = mm(Math.abs(wabsmax));
-    el('dMid').textContent  = mm(Math.abs(wmid));
-    el('ok').textContent    = 'Hesap tamam';
-
-    // ---- SVG drawing ----
-    const svg = el('svg');
-    svg.innerHTML='';
-    const W=1000, H=420, margin=40;
-    const baseY = H/2;
-    const leftX = margin, rightX = W - margin;
-    const xToPx = x => leftX + (x/L) * (rightX-leftX);
-    // normalize deflection for drawing (scale slider)
-    const yToPx = -w => baseY + (w * scale * 300); // m -> mm, then ×scale and up-negative
-
-    // baseline (undeformed)
-    const baseLine = line(xToPx(0), baseY, xToPx(L), baseY, '#c7cdd6', 2);
-    svg.appendChild(baseLine);
-
-    // supports (fixed) as squares
-    svg.appendChild(rect(xToPx(0)-6, baseY-6, 12, 12, '#111827'));
-    svg.appendChild(rect(xToPx(L)-6, baseY-6, 12, 12, '#111827'));
-
-    // load arrow at midspan
-    svg.appendChild(arrowDown(xToPx(L/2), baseY-60, 36, '#ef4444'));
-
-    // deflected polyline
-    const path = document.createElementNS('http://www.w3.org/2000/svg','polyline');
-    const pts = xs.map((x,i)=> `${xToPx(x)},${yToPx(ws[i])}`).join(' ');
-    path.setAttribute('points', pts);
-    path.setAttribute('fill','none');
-    path.setAttribute('stroke','#253955');
-    path.setAttribute('stroke-width','3');
-    svg.appendChild(path);
-
-    // ticks every 0.5 m
-    for(let x=0;x<=L+1e-9;x+=0.5){
-      const X=xToPx(x);
-      svg.appendChild(line(X, baseY-6, X, baseY+6, '#dfe3ea', 1));
-    }
+    // Basit renk kodu (opsiyonel eşikler)
+    ratioOut.className = 'ratio ' + (ratio < 0.6 ? 'ok' : (ratio < 0.72 ? 'warn' : 'bad'));
   }
 
-  // --- SVG helpers ---
-  function line(x1,y1,x2,y2,color,w){
-    const ln = document.createElementNS('http://www.w3.org/2000/svg','line');
-    ln.setAttribute('x1',x1); ln.setAttribute('y1',y1);
-    ln.setAttribute('x2',x2); ln.setAttribute('y2',y2);
-    ln.setAttribute('stroke',color); ln.setAttribute('stroke-width',w||2);
-    return ln;
-  }
-  function rect(x,y,w,h,color){
-    const r = document.createElementNS('http://www.w3.org/2000/svg','rect');
-    r.setAttribute('x',x); r.setAttribute('y',y); r.setAttribute('width',w); r.setAttribute('height',h);
-    r.setAttribute('fill',color); r.setAttribute('rx','2'); r.setAttribute('ry','2');
-    return r;
-  }
-  function arrowDown(x,y,size,color){
-    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
-    const shaft = line(x, y, x, y+size, color, 3);
-    const h = document.createElementNS('http://www.w3.org/2000/svg','polygon');
-    h.setAttribute('points', `${x-8},${y+size-2} ${x+8},${y+size-2} ${x},${y+size+12}`);
-    h.setAttribute('fill', color);
-    g.appendChild(shaft); g.appendChild(h);
-    return g;
-  }
-
-  // events
-  el('solve').addEventListener('click', solveAndPlot);
-  el('reset').addEventListener('click', ()=>{
-    el('E').value=210; el('I').value=8e-6; el('L').value=6; el('P').value=10;
-    el('scale').value=600; el('nsamp').value=180;
-    solveAndPlot();
-  });
-
-  // initial render
-  solveAndPlot();
+  el('calc').addEventListener('click', compute);
+  // İlk render
+  compute();
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
