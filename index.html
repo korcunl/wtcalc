@@ -1,115 +1,218 @@
-<!doctype html>
-<html lang="tr">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Hoop Stress (ASME B31.8) — Minimal Hesap</title>
-<style>
-  :root{
-    --bg:#f6f7f9; --card:#fff; --ink:#0f172a; --muted:#6b7280;
-    --accent:#2563eb; --ok:#16a34a; --warn:#b45309; --bad:#b91c1c;
-  }
-  *{box-sizing:border-box}
-  body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--ink)}
-  .wrap{max-width:1080px;margin:24px auto;padding:0 20px;display:grid;gap:16px}
-  h1{font-size:22px;margin:0 0 6px}
-  .sub{color:var(--muted);margin:0 0 12px}
-  .grid{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
-  .card{background:var(--card);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.06);padding:18px}
-  label{font-size:13px;display:block;margin-bottom:6px}
-  input,select{width:100%;padding:12px 14px;border:1px solid #d7dbe2;border-radius:12px;font-size:15px;background:#fff}
-  input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
-  .row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-  .row2{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:10px}
-  .btn{padding:12px 16px;border:0;border-radius:12px;background:#111;color:#fff;font-weight:600;cursor:pointer}
-  .kv{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed #e5e7eb}
-  .kv:last-child{border-bottom:0}
-  .ratio{font-weight:700}
-  .ok{color:var(--ok)} .warn{color:var(--warn)} .bad{color:var(--bad)}
-  .hint{font-size:12px;color:var(--muted);margin-top:6px}
-  @media (max-width:980px){ .grid{grid-template-columns:1fr} .row{grid-template-columns:repeat(2,1fr)} }
-</style>
-</head>
-<body>
-<div class="wrap">
-  <div class="card">
-    <h1>Hoop Stress Hesabı — ASME B31.8</h1>
-    <p class="sub">Seçili dış çap (inç) → <b>mm</b>’ye çevrilir. Hesap: <b>S<sub>H</sub> = P·D / (2·t)</b>. Son olarak <b>S<sub>H</sub>/SMYS</b> oranını verir.</p>
-    <div class="grid">
-      <!-- Sol panel: giriş -->
-      <div class="card">
-        <div class="row">
-          <div>
-            <label>OD (inç)</label>
-            <select id="size">
-              <option value="56">56"</option>
-              <option value="48">48"</option>
-              <option value="36">36"</option>
-            </select>
-          </div>
-          <div>
-            <label>Basınç P (MPa)</label>
-            <input id="P" type="number" step="0.01" value="9.55" />
-          </div>
-          <div>
-            <label>Et Kalınlığı t (mm)</label>
-            <input id="t" type="number" step="0.01" value="19.45" />
-          </div>
-          <div>
-            <label>SMYS S (MPa)</label>
-            <input id="S" type="number" step="1" value="485" />
-          </div>
-        </div>
-        <div style="margin-top:12px"><button class="btn" id="calc">Hesapla</button></div>
-        <p class="hint">Not: D = (Outside Diameter inç) × 25.4 (mm). P ve S MPa, t ve D mm alınır → sonuç S<sub>H</sub> MPa.</p>
-      </div>
+<section class="card" style="padding:20px">
+  <h2 style="margin:0 0 6px;">TANAP — Harita, Filtre ve Liste</h2>
+  <p class="sub">Aşağıdan <b>Contractor / Bölge / Lot</b> seç; harita ve tablo otomatik filtrelensin. (Çoklu seçim desteklenir, kesişim uygulanır.)</p>
 
-      <!-- Sağ panel: sonuç -->
-      <div class="card">
-        <div class="kv"><span>D (mm)</span><strong id="Dmm">—</strong></div>
-        <div class="kv"><span>Hoop Stress S<sub>H</sub> (MPa)</span><strong id="SH">—</strong></div>
-        <div class="kv"><span>Oran S<sub>H</sub>/SMYS</span><strong id="ratio" class="ratio">—</strong></div>
-        <div class="kv"><span>Formül</span><span class="hint">S<sub>H</sub> = P·D / (2·t)</span></div>
-      </div>
+  <!-- Filtre çubukları -->
+  <div class="filters" style="display:grid; gap:10px; margin-bottom:12px">
+    <div class="chipbar" data-key="contractor">
+      <span class="chiplabel">Contractor:</span>
+      <button class="chip" data-val="FERNAS">FERNAS</button>
+      <button class="chip" data-val="PLK">PLK</button>
+      <button class="chip" data-val="SYA">SYA</button>
+      <button class="chip" data-val="TEKFEN">TEKFEN</button>
+    </div>
+    <div class="chipbar" data-key="region">
+      <span class="chiplabel">Bölge:</span>
+      <button class="chip" data-val="Eastern Anatolia">Eastern Anatolia</button>
+      <button class="chip" data-val="Central Anatolia">Central Anatolia</button>
+      <button class="chip" data-val="Aegean">Aegean</button>
+      <button class="chip" data-val="Marmara">Marmara</button>
+    </div>
+    <div class="chipbar" data-key="lot">
+      <span class="chiplabel">Lot:</span>
+      <button class="chip" data-val="Lot 1">Lot 1</button>
+      <button class="chip" data-val="Lot 2">Lot 2</button>
+      <button class="chip" data-val="Lot 3">Lot 3</button>
+      <button class="chip" data-val="Lot 4">Lot 4</button>
+    </div>
+    <div>
+      <button id="clearFilters" class="btn secondary">Filtreyi Temizle</button>
     </div>
   </div>
-</div>
+
+  <!-- Harita -->
+  <div class="card" style="padding:0; overflow:hidden">
+    <div id="mapBox" style="position:relative; width:100%; height:420px; background:#f3f5f8; border:1px dashed #d7dbe2; border-radius:12px;">
+      <svg viewBox="0 0 1000 420" width="100%" height="100%">
+        <!-- Arkaplan kılavuz çizgisi -->
+        <rect x="0" y="0" width="1000" height="420" fill="#fafbfc"/>
+        <!-- Basit Türkiye silueti (yaklaşık, dekoratif) -->
+        <path d="M40,260 Q120,140 240,180 Q360,220 480,180 Q600,150 740,190 Q880,230 960,210 L960,300 L40,300 Z"
+              fill="#eef2f7" stroke="#d4dae4"/>
+        <!-- İller için noktalar dinamik eklenecek -->
+      </svg>
+      <!-- Nokta/etiketler burada üretilecek -->
+    </div>
+    <div class="hint" style="padding:8px 12px">Not: Bu sürüm noktasal gösterim kullanır. Polygon haritaya geçmek için GeoJSON katmanı ekleyebiliriz.</div>
+  </div>
+
+  <!-- Tablo -->
+  <div class="card" style="margin-top:12px">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px">
+      <strong>İstasyon Listesi</strong>
+      <span class="muted" id="countInfo">0 kayıt</span>
+    </div>
+    <div style="overflow:auto">
+      <table id="kpTable" style="width:100%; border-collapse:collapse">
+        <thead>
+          <tr>
+            <th>No</th><th>Station</th><th>KP</th><th>City</th><th>District</th>
+            <th>Contractor</th><th>Lot</th><th>Bölge</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* chip stilleri */
+  .chiplabel{ margin-right:6px; font-weight:600; color:#111 }
+  .chip{ padding:8px 10px; border:1px solid #d7dbe2; border-radius:10px; background:#fff; cursor:pointer; margin-right:6px; }
+  .chip.is-active{ background:#111; color:#fff; border-color:#111 }
+  /* tablo */
+  #kpTable th, #kpTable td{ padding:10px 8px; border-bottom:1px solid #e9edf3; text-align:left; white-space:nowrap }
+  #kpTable thead th{ color:#0f172a; font-size:13px; background:#f6f8fb; position:sticky; top:0 }
+  /* harita noktaları */
+  .city-dot{ transition: transform .15s ease, opacity .15s ease }
+  .city-dot.inactive{ opacity:.2 }
+  .city-dot text{ font-size:12px; fill:#334155 }
+</style>
 
 <script>
-  const el = id => document.getElementById(id);
-  const size = el('size'), P = el('P'), t = el('t'), S = el('S');
-  const DmmOut = el('Dmm'), SHOut = el('SH'), ratioOut = el('ratio');
+  // --- İl noktalarının (yaklaşık) koordinatları [%] ---
+  // Bu listeye yeni il ekleyebilirsin: name, x%, y%
+  const CITY_POS = {
+    "ARDAHAN": {x:84, y:160}, "KARS": {x:820, y:170}, "ERZURUM": {x:770, y:200},
+    "ERZINCAN": {x:720, y:230}, "GÜMÜŞHANE": {x:690, y:240}, "SIVAS": {x:650, y:250},
+    "YOZGAT": {x:610, y:260}, "KIRŞEHİR": {x:580, y:270}, "KIRIKKALE": {x:560, y:280},
+    "ANKARA": {x:540, y:290}, "ESKİŞEHİR": {x:500, y:300}, "BİLECİK": {x:480, y:310},
+    "KÜTAHYA": {x:470, y:320}, "BURSA": {x:450, y:315}, "BALIKESİR": {x:420, y:320},
+    "ÇANAKKALE": {x:380, y:300}, "TEKİRDAĞ": {x:350, y:290}, "EDİRNE": {x:330, y:280}
+  };
 
-  function fmt(v, d=2){ return isFinite(v) ? v.toFixed(d) : '—'; }
+  // --- Örnek veri (tabloda görünecek) ---
+  // Dilersen tüm listeyi buraya ekleyebilirsin.
+  const DATA = [
+    {no:1,  station:"FMS-01", kp:"0,838", city:"ARDAHAN", district:"POSOF", contractor:"FERNAS", lot:"Lot 1", region:"Eastern Anatolia"},
+    {no:2,  station:"BVS-1",  kp:"20,061", city:"ARDAHAN", district:"POSOF", contractor:"FERNAS", lot:"Lot 1", region:"Eastern Anatolia"},
+    {no:3,  station:"CST-01", kp:"44,775", city:"ARDAHAN", district:"DAMAL", contractor:"FERNAS", lot:"Lot 1", region:"Eastern Anatolia"},
+    {no:8,  station:"BVS-6",  kp:"196,009", city:"KARS", district:"SARIKAMIŞ", contractor:"FERNAS", lot:"Lot 1", region:"Eastern Anatolia"},
+    {no:10, station:"BVS-8",  kp:"258,654", city:"ERZURUM", district:"KÖPRÜKÖY", contractor:"FERNAS", lot:"Lot 1", region:"Eastern Anatolia"},
+    {no:16, station:"BVS-12", kp:"409,938", city:"ERZINCAN", district:"TERCAN", contractor:"SYA", lot:"Lot 2", region:"Eastern Anatolia"},
+    {no:21, station:"BVS-18", kp:"585,990", city:"SIVAS", district:"GÖLOVA", contractor:"FERNAS", lot:"Lot 2", region:"Eastern Anatolia"},
+    {no:30, station:"BVS-26", kp:"855,060", city:"YOZGAT", district:"AKMADENLİ", contractor:"TEKFEN", lot:"Lot 3", region:"Central Anatolia"},
+    {no:36, station:"CST-04", kp:"1029,233", city:"KIRŞEHİR", district:"AKÇAKENT", contractor:"TEKFEN", lot:"Lot 3", region:"Central Anatolia"},
+    {no:38, station:"BVS-32", kp:"1066,096", city:"KIRIKKALE", district:"KESKİN", contractor:"TEKFEN", lot:"Lot 3", region:"Central Anatolia"},
+    {no:39, station:"BVS-33", kp:"1092,963", city:"KIRIKKALE", district:"KARAKEÇİLİ", contractor:"TEKFEN", lot:"Lot 3", region:"Central Anatolia"},
+    {no:41, station:"BVS-35", kp:"1158,813", city:"ANKARA", district:"GÖLBAŞI", contractor:"TEKFEN", lot:"Lot 3", region:"Central Anatolia"},
+    {no:47, station:"BVS-40", kp:"1373,134", city:"ESKİŞEHİR", district:"TEPEBAŞI", contractor:"PLK", lot:"Lot 4", region:"Central Anatolia"},
+    {no:49, station:"BVS-42", kp:"1428,892", city:"BİLECİK", district:"BOZÜYÜK", contractor:"PLK", lot:"Lot 4", region:"Central Anatolia"},
+    {no:50, station:"BVS-43", kp:"1454,015", city:"KÜTAHYA", district:"DOMANİÇ", contractor:"PLK", lot:"Lot 4", region:"Aegean"},
+    {no:52, station:"BVS-44", kp:"1520,188", city:"BURSA", district:"BÜYÜKORHAN", contractor:"PLK", lot:"Lot 4", region:"Marmara"},
+    {no:55, station:"BVS-47", kp:"1620,331", city:"BALIKESİR", district:"MANYAS", contractor:"PLK", lot:"Lot 4", region:"Marmara"},
+    {no:58, station:"BVS-48", kp:"1688,058", city:"ÇANAKKALE", district:"BİGA", contractor:"PLK", lot:"Lot 4", region:"Marmara"},
+    {no:60, station:"PST-DSW",kp:"1735,519", city:"TEKİRDAĞ", district:"ŞARKÖY", contractor:"PLK", lot:"Lot 4", region:"Marmara"},
+    {no:62, station:"FMS-04", kp:"1806,591", city:"EDİRNE", district:"İPSALA", contractor:"PLK", lot:"Lot 4", region:"Marmara"}
+  ];
 
-  function compute(){
-    const inches = parseFloat(size.value);
-    const Dmm = inches * 25.4;               // mm
-    const Pmpa = parseFloat(P.value);        // MPa
-    const tmm  = parseFloat(t.value);        // mm
-    const Smys = parseFloat(S.value);        // MPa
+  // --- Renk paleti (bölgelere) ---
+  const REGION_COLOR = {
+    "Eastern Anatolia":"#3b82f6",
+    "Central Anatolia":"#f97316",
+    "Aegean":"#9ca3af",
+    "Marmara":"#f59e0b"
+  };
+  const DEFAULT_DOT = "#94a3b8";
 
-    if([inches,Pmpa,tmm,Smys].some(x => !isFinite(x) || x<=0)){
-      DmmOut.textContent = SHOut.textContent = ratioOut.textContent = '—';
-      ratioOut.className = 'ratio'; return;
-    }
+  // --- Filtre durumu ---
+  const filters = { contractor:new Set(), region:new Set(), lot:new Set() };
 
-    // SH = P * D / (2*t)  -> MPa
-    const SH = (Pmpa * Dmm) / (2 * tmm);
-    const ratio = SH / Smys;
+  // --- Harita üzerine şehir noktalarını çiz ---
+  const svg = document.querySelector('#mapBox svg');
+  const dotGroup = document.createElementNS('http://www.w3.org/2000/svg','g');
+  svg.appendChild(dotGroup);
 
-    DmmOut.textContent = fmt(Dmm, 1);
-    SHOut.textContent  = fmt(SH, 2);
-    ratioOut.textContent = fmt(ratio, 2);
-
-    // Basit renk kodu (opsiyonel eşikler)
-    ratioOut.className = 'ratio ' + (ratio < 0.6 ? 'ok' : (ratio < 0.72 ? 'warn' : 'bad'));
+  function drawDots(activeCities){
+    dotGroup.innerHTML='';
+    const used = new Set(); // aynı ili birden fazla satır tetiklerse tek çiz
+    activeCities.forEach(city=>{
+      if(!CITY_POS[city] || used.has(city)) return;
+      used.add(city);
+      const {x,y} = CITY_POS[city];
+      const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+      g.setAttribute('class','city-dot');
+      // nokta
+      const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('cx', x); c.setAttribute('cy', y);
+      c.setAttribute('r', 7);
+      c.setAttribute('fill', DEFAULT_DOT);
+      c.setAttribute('stroke', '#1f2937'); c.setAttribute('stroke-width', '1');
+      // etiket
+      const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x', x+10); t.setAttribute('y', y+4);
+      t.textContent = city; t.setAttribute('fill', '#0f172a');
+      g.appendChild(c); g.appendChild(t);
+      dotGroup.appendChild(g);
+    });
   }
 
-  el('calc').addEventListener('click', compute);
-  // İlk render
-  compute();
-</script>
-</body>
-</html>
+  // --- Tabloyu çiz ---
+  const tbody = document.querySelector('#kpTable tbody');
+  function renderTable(rows){
+    tbody.innerHTML='';
+    rows.forEach(r=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${r.no}</td>
+        <td>${r.station}</td>
+        <td>${r.kp}</td>
+        <td>${r.city}</td>
+        <td>${r.district}</td>
+        <td>${r.contractor}</td>
+        <td>${r.lot}</td>
+        <td>${r.region}</td>`;
+      tbody.appendChild(tr);
+    });
+    document.getElementById('countInfo').textContent = `${rows.length} kayıt`;
+  }
 
+  // --- Filtre uygula (kesişim mantığı) ---
+  function applyFilters(){
+    const fc = filters.contractor, fr = filters.region, fl = filters.lot;
+    const rows = DATA.filter(r=>{
+      const okC = fc.size? fc.has(r.contractor): true;
+      const okR = fr.size? fr.has(r.region): true;
+      const okL = fl.size? fl.has(r.lot): true;
+      return okC && okR && okL;
+    });
+    // harita: aktif şehirler
+    drawDots(rows.map(r=>r.city));
+    // tablo
+    renderTable(rows);
+  }
+
+  // --- Chip olayları ---
+  document.querySelectorAll('.chipbar').forEach(bar=>{
+    const key = bar.dataset.key; // contractor/region/lot
+    bar.querySelectorAll('.chip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const val = btn.dataset.val;
+        const set = filters[key];
+        if(set.has(val)){ set.delete(val); btn.classList.remove('is-active'); }
+        else { set.add(val); btn.classList.add('is-active'); }
+        applyFilters();
+      });
+    });
+  });
+  document.getElementById('clearFilters').addEventListener('click', ()=>{
+    ['contractor','region','lot'].forEach(k=>filters[k].clear());
+    document.querySelectorAll('.chip.is-active').forEach(c=>c.classList.remove('is-active'));
+    applyFilters();
+  });
+
+  // --- İlk çizim (filtre yok -> tüm veri) ---
+  drawDots(Object.keys(CITY_POS));
+  renderTable(DATA);
+</script>
